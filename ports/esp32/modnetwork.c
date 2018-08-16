@@ -156,12 +156,12 @@ static void sc_callback(smartconfig_status_t status, void *pdata)
         wifi_sta_config = *wifi_config;
         break;
     case SC_STATUS_LINK_OVER:
-        ESP_LOGD(TAG, "SC_STATUS_LINK_OVER");
+        ESP_LOGI(TAG, "SC_STATUS_LINK_OVER");
         if (pdata != NULL)
         {
             uint8_t phone_ip[4] = {0};
             memcpy(phone_ip, (uint8_t *)pdata, 4);
-            ESP_LOGD(TAG, "Phone ip: %d.%d.%d.%d\n", phone_ip[0], phone_ip[1], phone_ip[2], phone_ip[3]);
+            ESP_LOGI(TAG, "Phone ip: %d.%d.%d.%d\n", phone_ip[0], phone_ip[1], phone_ip[2], phone_ip[3]);
         }
         xEventGroupSetBits(wifi_event_group, ESPTOUCH_DONE_BIT);
         break;
@@ -241,17 +241,9 @@ bool config_smartconfig(void)
 
     // but user hope changed config
     gpio_set_direction(SMART_CONFIG_KEY, GPIO_MODE_INPUT);
-    if (1 == gpio_get_level(SMART_CONFIG_KEY))
+    if (0 == gpio_get_level(SMART_CONFIG_KEY))
     {
-        for (uint8_t i = 0; i < 10; i++)
-        {
-            vTaskDelay(200 / portTICK_PERIOD_MS);
-            if (0 == gpio_get_level(SMART_CONFIG_KEY))
-            {
-                smartconfig_mode = true;
-                break;
-            }
-        }
+        smartconfig_mode = true;
     }
 
     ESP_ERROR_CHECK(esp_wifi_start());
@@ -277,6 +269,10 @@ bool config_smartconfig(void)
             }
             // esp_restart();
         }
+    }
+    else
+    {
+        esp_wifi_connect();
     }
 
     if (spiffs)
@@ -398,10 +394,6 @@ static esp_err_t event_handler(void *ctx, system_event_t *event) {
         if (smartconfig_mode)
         {
             xTaskCreate(smartconfig_task, "smartconfig_task", 2048, NULL, 3, NULL);
-        }
-        else
-        {
-            ESP_ERROR_CHECK(esp_wifi_connect());
         }
         break;
     case SYSTEM_EVENT_STA_CONNECTED:
