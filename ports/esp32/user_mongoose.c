@@ -146,8 +146,8 @@ void mg_poll()
 {
     if(mongoose_state)
     {
-        mg_mgr_poll(&mgr_dns, 20);
-        mg_mgr_poll(&mgr_http, 200);
+        mg_mgr_poll(&mgr_dns, 10);
+        mg_mgr_poll(&mgr_http, 10);
     }
 }
 

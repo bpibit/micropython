@@ -54,7 +54,7 @@
 
 // MicroPython runs as a task under FreeRTOS
 #define MP_TASK_PRIORITY        (ESP_TASK_PRIO_MIN + 1)
-#define MP_TASK_STACK_SIZE      (16 * 1024)
+#define MP_TASK_STACK_SIZE      (32 * 1024)
 #define MP_TASK_STACK_LEN       (MP_TASK_STACK_SIZE / sizeof(StackType_t))
 
 STATIC StaticTask_t mp_task_tcb;
@@ -135,9 +135,9 @@ soft_reset:
 void app_main(void) {
     nvs_flash_init();
     rtc_clk_cpu_freq_set(RTC_CPU_FREQ_80M);
-    bpibit_init(); //vTaskDelay(50 / portTICK_PERIOD_MS);
     mp_main_task_handle = xTaskCreateStaticPinnedToCore(mp_task, "mp_task", MP_TASK_STACK_LEN, NULL, MP_TASK_PRIORITY,
                                                         &mp_task_stack[0], &mp_task_tcb, 0);
+    bpibit_init(); //vTaskDelay(50 / portTICK_PERIOD_MS);
 }
 
 void nlr_jump_fail(void *val) {

@@ -38,5 +38,8 @@ def setup():
 #esp.osdebug(None)
 #import webrepl
 #webrepl.start()
+import network
+import webdav
+import reload
 """)
     return vfs

@@ -6,7 +6,7 @@ def __poll__():
     import time
     global WebDavState
     while WebDavState:
-        time.sleep(1)
+        time.sleep(0.4)
         mongoose.poll()
 
 def start():
@@ -23,6 +23,6 @@ def start():
             return True
     return False
 
-def stop():
+def close():
     global WebDavState
     WebDavState = False

@@ -151,7 +151,7 @@ static void sc_callback(smartconfig_status_t status, void *pdata)
         ESP_LOGD(TAG, "SSID:%s", wifi_config->sta.ssid);
         ESP_LOGD(TAG, "PASSWORD:%s", wifi_config->sta.password);
         ESP_ERROR_CHECK(esp_wifi_disconnect());
-        ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, wifi_config));
+        ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA , wifi_config));
         ESP_ERROR_CHECK(esp_wifi_connect());
         wifi_sta_config = *wifi_config;
         break;
@@ -396,6 +396,8 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_0(esp_initialize_obj, esp_initialize);
 bool config_smartconfig(void)
 {
     bool result = false;
+    if(wifi_started) return result;
+    
     wifi_event_group = xEventGroupCreate();
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
@@ -423,34 +425,32 @@ bool config_smartconfig(void)
         wifi_config_t *wifi_config = &wifi_sta_config;
         ESP_LOGD(TAG, "SSID:%s", wifi_config->sta.ssid);
         ESP_LOGD(TAG, "PASSWORD:%s", wifi_config->sta.password);
-        ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, wifi_config));
+        ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, wifi_config));
         smartconfig_mode = false;
     }
     else
     {
         ESP_LOGI(TAG, "default smartconfig config\n");
-        wifi_config_t sta_config = {
-            .sta = {
-                .ssid = "tgoffice",
-                .password = "tu9u2017",
-                .bssid_set = false
-            }
-        };
-
+        wifi_config_t sta_config;
         memcpy(sta_config.sta.ssid, WIFI_AP_SSID, strlen(WIFI_AP_SSID));
         ESP_LOGD(TAG, "SSID:%s", WIFI_AP_SSID);
         ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &sta_config));
     }
 
     // but user hope changed config
-    gpio_set_direction(SMART_CONFIG_KEY, GPIO_MODE_INPUT);
+    ESP_ERROR_CHECK(gpio_set_direction(SMART_CONFIG_KEY, GPIO_MODE_INPUT));
     if (0 == gpio_get_level(SMART_CONFIG_KEY))
     {
         smartconfig_mode = true;
     }
 
     ESP_ERROR_CHECK(esp_wifi_start());
-    wifi_started = true;
+
+    // TCPIP_ADAPTER_IF_STA
+    ESP_ERROR_CHECK(tcpip_adapter_set_hostname(WIFI_IF_STA, WIFI_AP_SSID));
+    ESP_LOGI(TAG, "tcpip_adapter_set_hostname = %s", WIFI_AP_SSID);
+
+    result = wifi_started = true;
     if (smartconfig_mode)
     {
         gpio_set_direction(SMART_CONFIG_LED, GPIO_MODE_OUTPUT);
@@ -463,7 +463,6 @@ bool config_smartconfig(void)
 
         if (uxBits & SMARTCONFIG_DONE_BIT)
         {
-            result = true;
             ESP_LOGD(TAG, "SMARTCONFIG_DONE_BIT");
             if (false == wifi_config_file_write(&wifi_sta_config))
             {
@@ -476,7 +475,7 @@ bool config_smartconfig(void)
     }
     else
     {
-        esp_wifi_connect();
+        ESP_ERROR_CHECK(esp_wifi_connect());
     }
 
     if (spiffs)
@@ -488,10 +487,10 @@ bool config_smartconfig(void)
     {
         ESP_LOGD(TAG, "spiffs error! need to erase");
     }
+
     vEventGroupDelete(wifi_event_group);
 
-    gpio_set_level(SMART_CONFIG_LED, 0);
-    gpio_reset_pin(SMART_CONFIG_LED);
+    gpio_set_level(SMART_CONFIG_LED, 0), gpio_reset_pin(SMART_CONFIG_LED);
     
     // mdns need wait wifi connected about 3 to 5s.
 
@@ -506,8 +505,7 @@ bool config_smartconfig(void)
 }
 
 STATIC mp_obj_t esp_smartconfig() {
-    config_smartconfig();
-    return mp_const_none;
+    return mp_obj_new_bool(config_smartconfig());
 }
 
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(esp_smartconfig_obj, esp_smartconfig);
@@ -580,7 +578,7 @@ STATIC mp_obj_t esp_connect(size_t n_args, const mp_obj_t *pos_args, mp_map_t *k
             wifi_sta_config.sta.bssid_set = 1;
             memcpy(wifi_sta_config.sta.bssid, p, sizeof(wifi_sta_config.sta.bssid));
         }
-        ESP_EXCEPTIONS( esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_sta_config) );
+        ESP_EXCEPTIONS( esp_wifi_set_config(WIFI_IF_STA , &wifi_sta_config) );
     }
 
     // connect to the WiFi AP
