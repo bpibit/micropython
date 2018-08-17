@@ -149,7 +149,6 @@ bool MicroPythonCheckFile()
 extern FATFS *mongoose_vfs;
 
 STATIC mp_obj_t mongoose_init(void) {
-
     const char * oofatfs_path = "/flashbdev";
     mongoose_vfs = lookup_path(&oofatfs_path);
     mg_init();

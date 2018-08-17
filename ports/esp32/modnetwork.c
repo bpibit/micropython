@@ -190,124 +190,6 @@ void smartconfig_task(void *parm)
     }
 }
 
-bool config_smartconfig(void)
-{
-    bool result = false;
-    wifi_event_group = xEventGroupCreate();
-
-    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-    
-    /*
-    ESP_ERROR_CHECK( esp_wifi_set_mode(WIFI_MODE_APSTA) );
-    wifi_config_t wifi_ap_config = {0};
-    wifi_ap_config.ap.ssid_len = strlen(WIFI_AP_SSID);
-    memcpy(wifi_ap_config.ap.ssid, WIFI_AP_SSID, strlen(WIFI_AP_SSID));
-    wifi_ap_config.ap.max_connection = 1;                                  // 能连接的设备数
-    wifi_ap_config.ap.authmode = WIFI_AUTH_OPEN;                           //WIFI_AUTH_WPA_WPA2_PSK;
-    ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_AP, &wifi_ap_config)); // AP配置
-    */
-
-    bool spiffs = wifi_config_file_init(), config = false;
-    ESP_LOGD(TAG, "spiffs wifi_config_file_init result:%d\n", spiffs);
-
-    // exist config not need default smartconfig
-    if (spiffs && true == (config = wifi_config_file_read(&wifi_sta_config)))
-    {
-        ESP_LOGI(TAG, "exist smartconfig config\n");
-        wifi_config_t *wifi_config = &wifi_sta_config;
-        ESP_LOGD(TAG, "SSID:%s", wifi_config->sta.ssid);
-        ESP_LOGD(TAG, "PASSWORD:%s", wifi_config->sta.password);
-        ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, wifi_config));
-        smartconfig_mode = false;
-    }
-    else
-    {
-        ESP_LOGI(TAG, "default smartconfig config\n");
-        wifi_config_t sta_config = {
-            .sta = {
-                .ssid = "tgoffice",
-                .password = "tu9u2017",
-                .bssid_set = false
-            }
-        };
-
-        memcpy(sta_config.sta.ssid, WIFI_AP_SSID, strlen(WIFI_AP_SSID));
-        ESP_LOGD(TAG, "SSID:%s", WIFI_AP_SSID);
-        ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &sta_config));
-    }
-
-    // but user hope changed config
-    gpio_set_direction(SMART_CONFIG_KEY, GPIO_MODE_INPUT);
-    if (0 == gpio_get_level(SMART_CONFIG_KEY))
-    {
-        smartconfig_mode = true;
-    }
-
-    ESP_ERROR_CHECK(esp_wifi_start());
-    if (smartconfig_mode)
-    {
-        gpio_set_direction(SMART_CONFIG_LED, GPIO_MODE_OUTPUT);
-        gpio_set_level(SMART_CONFIG_LED, 1);
-
-        smartconfig_mode = false;
-        ESP_LOGD(TAG, "wait SMARTCONFIG_DONE_BIT");
-
-        EventBits_t uxBits = xEventGroupWaitBits(wifi_event_group, SMARTCONFIG_DONE_BIT, true, false, portMAX_DELAY);
-
-        if (uxBits & SMARTCONFIG_DONE_BIT)
-        {
-            result = true;
-            ESP_LOGD(TAG, "SMARTCONFIG_DONE_BIT");
-            if (false == wifi_config_file_write(&wifi_sta_config))
-            {
-                ESP_LOGD(TAG, "wifi_config_file_write");
-                remove(SMART_CONFIG_FILE);
-                result = false;
-            }
-            // esp_restart();
-        }
-    }
-    else
-    {
-        esp_wifi_connect();
-    }
-
-    if (spiffs)
-    {
-        wifi_config_file_exit();
-        ESP_LOGD(TAG, "wifi_config_exit");
-    }
-    else
-    {
-        ESP_LOGD(TAG, "spiffs error! need to erase");
-    }
-    vEventGroupDelete(wifi_event_group);
-
-    gpio_set_level(SMART_CONFIG_LED, 0);
-    gpio_reset_pin(SMART_CONFIG_LED);
-    
-    // mdns need wait wifi connected about 3 to 5s.
-
-    //initialize mDNS
-    while(ESP_OK != mdns_init());
-    //set mDNS hostname (required if you want to advertise services)
-    while(ESP_OK != mdns_hostname_set(WIFI_AP_SSID));
-    //initialize service
-    while(ESP_OK != mdns_service_add(WIFI_AP_SSID, "_http", "_tcp", 80, NULL, 0));
-    
-    return result;
-}
-
-STATIC mp_obj_t esp_smartconfig() {
-    config_smartconfig();
-    return mp_const_none;
-}
-
-STATIC MP_DEFINE_CONST_FUN_OBJ_0(esp_smartconfig_obj, esp_smartconfig);
-
 #define MODNETWORK_INCLUDE_CONSTANTS (1)
 
 NORETURN void _esp_exceptions(esp_err_t e) {
@@ -510,6 +392,125 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_0(esp_initialize_obj, esp_initialize);
 #if (WIFI_MODE_STA & WIFI_MODE_AP != WIFI_MODE_NULL || WIFI_MODE_STA | WIFI_MODE_AP != WIFI_MODE_APSTA)
 #error WIFI_MODE_STA and WIFI_MODE_AP are supposed to be bitfields!
 #endif
+
+bool config_smartconfig(void)
+{
+    bool result = false;
+    wifi_event_group = xEventGroupCreate();
+
+    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+
+    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+    
+    /*
+    ESP_ERROR_CHECK( esp_wifi_set_mode(WIFI_MODE_APSTA) );
+    wifi_config_t wifi_ap_config = {0};
+    wifi_ap_config.ap.ssid_len = strlen(WIFI_AP_SSID);
+    memcpy(wifi_ap_config.ap.ssid, WIFI_AP_SSID, strlen(WIFI_AP_SSID));
+    wifi_ap_config.ap.max_connection = 1;                                  // 能连接的设备数
+    wifi_ap_config.ap.authmode = WIFI_AUTH_OPEN;                           //WIFI_AUTH_WPA_WPA2_PSK;
+    ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_AP, &wifi_ap_config)); // AP配置
+    */
+
+    bool spiffs = wifi_config_file_init(), config = false;
+    ESP_LOGD(TAG, "spiffs wifi_config_file_init result:%d\n", spiffs);
+
+    // exist config not need default smartconfig
+    if (spiffs && true == (config = wifi_config_file_read(&wifi_sta_config)))
+    {
+        ESP_LOGI(TAG, "exist smartconfig config\n");
+        wifi_config_t *wifi_config = &wifi_sta_config;
+        ESP_LOGD(TAG, "SSID:%s", wifi_config->sta.ssid);
+        ESP_LOGD(TAG, "PASSWORD:%s", wifi_config->sta.password);
+        ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, wifi_config));
+        smartconfig_mode = false;
+    }
+    else
+    {
+        ESP_LOGI(TAG, "default smartconfig config\n");
+        wifi_config_t sta_config = {
+            .sta = {
+                .ssid = "tgoffice",
+                .password = "tu9u2017",
+                .bssid_set = false
+            }
+        };
+
+        memcpy(sta_config.sta.ssid, WIFI_AP_SSID, strlen(WIFI_AP_SSID));
+        ESP_LOGD(TAG, "SSID:%s", WIFI_AP_SSID);
+        ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &sta_config));
+    }
+
+    // but user hope changed config
+    gpio_set_direction(SMART_CONFIG_KEY, GPIO_MODE_INPUT);
+    if (0 == gpio_get_level(SMART_CONFIG_KEY))
+    {
+        smartconfig_mode = true;
+    }
+
+    ESP_ERROR_CHECK(esp_wifi_start());
+    wifi_started = true;
+    if (smartconfig_mode)
+    {
+        gpio_set_direction(SMART_CONFIG_LED, GPIO_MODE_OUTPUT);
+        gpio_set_level(SMART_CONFIG_LED, 1);
+
+        smartconfig_mode = false;
+        ESP_LOGD(TAG, "wait SMARTCONFIG_DONE_BIT");
+
+        EventBits_t uxBits = xEventGroupWaitBits(wifi_event_group, SMARTCONFIG_DONE_BIT, true, false, portMAX_DELAY);
+
+        if (uxBits & SMARTCONFIG_DONE_BIT)
+        {
+            result = true;
+            ESP_LOGD(TAG, "SMARTCONFIG_DONE_BIT");
+            if (false == wifi_config_file_write(&wifi_sta_config))
+            {
+                ESP_LOGD(TAG, "wifi_config_file_write");
+                remove(SMART_CONFIG_FILE);
+                result = false;
+            }
+            // esp_restart();
+        }
+    }
+    else
+    {
+        esp_wifi_connect();
+    }
+
+    if (spiffs)
+    {
+        wifi_config_file_exit();
+        ESP_LOGD(TAG, "wifi_config_exit");
+    }
+    else
+    {
+        ESP_LOGD(TAG, "spiffs error! need to erase");
+    }
+    vEventGroupDelete(wifi_event_group);
+
+    gpio_set_level(SMART_CONFIG_LED, 0);
+    gpio_reset_pin(SMART_CONFIG_LED);
+    
+    // mdns need wait wifi connected about 3 to 5s.
+
+    //initialize mDNS
+    while(ESP_OK != mdns_init());
+    //set mDNS hostname (required if you want to advertise services)
+    while(ESP_OK != mdns_hostname_set(WIFI_AP_SSID));
+    //initialize service
+    while(ESP_OK != mdns_service_add(WIFI_AP_SSID, "_http", "_tcp", 80, NULL, 0));
+    
+    return result;
+}
+
+STATIC mp_obj_t esp_smartconfig() {
+    config_smartconfig();
+    return mp_const_none;
+}
+
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(esp_smartconfig_obj, esp_smartconfig);
 
 STATIC mp_obj_t esp_active(size_t n_args, const mp_obj_t *args) {
     wlan_if_obj_t *self = MP_OBJ_TO_PTR(args[0]);
