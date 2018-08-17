@@ -6,9 +6,12 @@ def __poll__():
     import time
     global WebDavState
     while WebDavState:
-        time.sleep(0.4)
-        mongoose.poll()
-
+        try:
+            time.sleep(0.4)
+            mongoose.poll()
+        except KeyboardInterrupt:
+            raise
+            
 def start():
     import _thread
     import network
