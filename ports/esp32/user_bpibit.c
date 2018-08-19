@@ -57,7 +57,7 @@ inline void BitShowName(uint8_t buf[], uint8_t len)
 
         Color[0] = Temp;
         
-        vTaskDelay(100 / portTICK_PERIOD_MS);
+        vTaskDelay(200 / portTICK_PERIOD_MS);
     }
 }
 

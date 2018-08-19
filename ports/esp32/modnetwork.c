@@ -66,7 +66,7 @@
 
 #define SMART_CONFIG_LED 18
 
-#define SMART_CONFIG_KEY 35
+#define SMART_CONFIG_KEY 27
 
 #define SMART_CONFIG_FILE "/spiffs/sta.cfg"
 
@@ -175,18 +175,23 @@ void smartconfig_task(void *parm)
     EventBits_t uxBits;
     ESP_ERROR_CHECK(esp_smartconfig_set_type(SC_TYPE_ESPTOUCH));
     ESP_ERROR_CHECK(esp_smartconfig_start(sc_callback));
-    while (true)
-    {
-        uxBits = xEventGroupWaitBits(wifi_event_group, ESPTOUCH_DONE_BIT, true, false, portMAX_DELAY);
+    
+    uxBits = xEventGroupWaitBits(wifi_event_group, ESPTOUCH_DONE_BIT, true, false, 120000 / portTICK_PERIOD_MS);
 
-        if (uxBits & ESPTOUCH_DONE_BIT)
-        {
-            ESP_LOGD(TAG, "smartconfig over");
-            esp_smartconfig_stop();
-            xEventGroupClearBits(wifi_event_group, ESPTOUCH_DONE_BIT);
-            xEventGroupSetBits(wifi_event_group, SMARTCONFIG_DONE_BIT);
-            vTaskDelete(NULL);
-        }
+    if (uxBits & ESPTOUCH_DONE_BIT)
+    {
+        ESP_LOGD(TAG, "smartconfig Success");
+        
+        esp_smartconfig_stop();
+        xEventGroupClearBits(wifi_event_group, ESPTOUCH_DONE_BIT);
+        xEventGroupSetBits(wifi_event_group, SMARTCONFIG_DONE_BIT);
+        vTaskDelete(NULL);
+    }
+    else
+    {
+        ESP_LOGD(TAG, "smartconfig Fail will restart");
+        vTaskDelay(100 / portTICK_PERIOD_MS);
+        esp_restart();
     }
 }
 
