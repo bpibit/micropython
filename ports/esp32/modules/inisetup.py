@@ -38,26 +38,20 @@ def setup():
 #esp.osdebug(None)
 #import webrepl
 #webrepl.start()
-""")
-    with open("main.py", "w") as f:
-        f.write("""\
+
 import network
 print('network smartconfig')
 network.smartconfig()
-
 import time
 time.sleep(3)
-
 import webdav
 print('webdav start')
 webdav.start()
-
 import os
-print('check index.py')
-os.stat('index.py')
-
+print('check main.py')
+os.stat('main.py')
 import reload
-print('reload start index.py')
-reload.start('index.py')
+print('reload start main.py')
+reload.start('main.py')
 """)
     return vfs
