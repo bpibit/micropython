@@ -66,7 +66,7 @@
 
 #define SMART_CONFIG_LED 18
 
-#define SMART_CONFIG_KEY 27
+#define SMART_CONFIG_KEY 35
 
 #define SMART_CONFIG_FILE "/spiffs/sta.cfg"
 
