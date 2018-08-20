@@ -134,22 +134,21 @@ static const char *TAG = "user_smartconfig";
 
 static void sc_callback(smartconfig_status_t status, void *pdata)
 {
+    static bool state_tip = true;
+    gpio_set_level(SMART_CONFIG_LED, state_tip), state_tip = !state_tip;
+
     switch (status)
     {
     case SC_STATUS_WAIT:
         ESP_LOGD(TAG, "SC_STATUS_WAIT");
-        gpio_set_level(SMART_CONFIG_LED, 0);
         break;
     case SC_STATUS_FIND_CHANNEL:
-        gpio_set_level(SMART_CONFIG_LED, 1);
         ESP_LOGD(TAG, "SC_STATUS_FINDING_CHANNEL");
         break;
     case SC_STATUS_GETTING_SSID_PSWD:
-        gpio_set_level(SMART_CONFIG_LED, 0);
         ESP_LOGD(TAG, "SC_STATUS_GETTING_SSID_PSWD");
         break;
     case SC_STATUS_LINK:
-        gpio_set_level(SMART_CONFIG_LED, 1);
         ESP_LOGD(TAG, "SC_STATUS_LINK");
         wifi_config_t *wifi_config = pdata;
         ESP_LOGD(TAG, "SSID:%s", wifi_config->sta.ssid);
@@ -160,7 +159,6 @@ static void sc_callback(smartconfig_status_t status, void *pdata)
         wifi_sta_config = *wifi_config;
         break;
     case SC_STATUS_LINK_OVER:
-        gpio_set_level(SMART_CONFIG_LED, 0);
         ESP_LOGI(TAG, "SC_STATUS_LINK_OVER");
         if (pdata != NULL)
         {
