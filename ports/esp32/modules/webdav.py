@@ -7,10 +7,10 @@ def __poll__():
     global WebDavState
     while WebDavState:
         try:
-            time.sleep(0.4)
+            time.sleep(0.5)
             mongoose.poll()
         except KeyboardInterrupt:
-            raise
+            pass
             
 def start():
     import _thread
