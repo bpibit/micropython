@@ -43,15 +43,16 @@ import network
 print('network smartconfig')
 network.smartconfig()
 import time
-time.sleep(3)
+time.sleep(4)
 import webdav
 print('webdav start')
 webdav.start()
 import os
-print('check main.py')
-os.stat('main.py')
+print('check index.py')
+os.stat('index.py')
 import reload
-print('reload start main.py')
-reload.start('main.py')
+print('reload start index.py')
+reload.start('index.py')
 """)
+
     return vfs
