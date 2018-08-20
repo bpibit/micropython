@@ -36,17 +36,20 @@ def setup():
 # This file is executed on every boot (including wake-boot from deepsleep)
 #import esp
 #esp.osdebug(None)
-#import webrepl
-#webrepl.start()
 
 import network
 print('network smartconfig')
 network.smartconfig()
 import time
 time.sleep(3)
+
+#import webrepl
+#webrepl.start()
+
 import webdav
 print('webdav start')
 webdav.start()
+
 import os
 print('check main.py')
 os.stat('main.py')
