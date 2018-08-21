@@ -38,6 +38,7 @@ def __index():
 	except Exception as e:
 		sys.print_exception(e)
 	while Thread[0]:
+		time.sleep(1)
 		pass
 	Thread[0] = True
 
