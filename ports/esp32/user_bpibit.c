@@ -98,7 +98,7 @@ void bpibit_init()
     if(ESP_OK == esp_efuse_mac_get_default(mac))
     {
         uint16_t name = 0;
-        memcpy(&name, &mac[4], sizeof(name));
+        name = ((uint16_t)mac[4] << 8) | mac[5];
         sprintf(WIFI_AP_SSID + 3, "%04hx", name);
     }
     else
@@ -109,7 +109,7 @@ void bpibit_init()
     
     // config_default_wifi();
 
-    uint8_t result[4] = { mac[5] >> 4, mac[5] & 15, mac[4] >> 4, mac[4] & 15,  };
+    uint8_t result[4] = { mac[4] >> 4, mac[4] & 15, mac[5] >> 4, mac[5] & 15,  };
     
     BitRunView(result);
 
