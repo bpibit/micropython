@@ -48,12 +48,7 @@ time.sleep(3)
 
 import webdav
 print('webdav start')
-<<<<<<< HEAD
-webdav.start()
-
-=======
 print(webdav.start())
->>>>>>> c57cab807efc2f1432da34086f12b29619dfc522
 import os
 print('check index.py')
 os.stat('index.py')
