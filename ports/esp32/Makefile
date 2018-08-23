@@ -15,7 +15,7 @@ FROZEN_MPY_DIR = modules
 include $(TOP)/py/py.mk
 
 PORT ?= /dev/ttyUSB0
-BAUD ?= 460800
+BAUD ?= 115200
 FLASH_MODE ?= dio
 FLASH_FREQ ?= 40m
 FLASH_SIZE ?= 4MB
