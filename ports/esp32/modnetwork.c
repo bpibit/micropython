@@ -458,7 +458,7 @@ bool config_smartconfig(void)
     ESP_ERROR_CHECK(tcpip_adapter_set_hostname(WIFI_IF_STA, WIFI_AP_SSID));
     ESP_LOGI(TAG, "tcpip_adapter_set_hostname = %s", WIFI_AP_SSID);
 
-    result = wifi_started = true;
+    result = wifi_started = wifi_sta_connect_requested = true;
     if (smartconfig_mode)
     {
         gpio_set_direction(SMART_CONFIG_LED, GPIO_MODE_OUTPUT);
