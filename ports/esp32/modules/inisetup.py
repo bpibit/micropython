@@ -40,8 +40,8 @@ def setup():
 import network
 print('network smartconfig')
 network.smartconfig()
-import time
-time.sleep(3)
+import utime
+utime.sleep(4)
 
 #import webrepl
 #webrepl.start()

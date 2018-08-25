@@ -112,6 +112,9 @@ soft_reset:
         }
     }
 
+    // run _exit scripts
+    pyexec_frozen_module("_exit.py");
+
     #if MICROPY_PY_THREAD
     mp_thread_deinit();
     #endif

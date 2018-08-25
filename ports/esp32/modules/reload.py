@@ -1,12 +1,12 @@
 # This file is executed on every boot (including wake-boot from deepsleep)
 
-import time
+import utime
 import sys
 import uos
 import _thread
 
 Thread = [ False ]
-ReloadFile = 'index.py'
+ReloadFile = ''
 ReloadState = False
 
 def GetFileHash():
@@ -14,21 +14,23 @@ def GetFileHash():
 	return uos.stat(ReloadFile)[8] # Get File Time
 	
 def __check():
+	global ReloadState, Thread
 	bak = GetFileHash()
 	_thread.start_new_thread(__index, ())
 	while(ReloadState):
-		time.sleep(1)
+		utime.sleep(1)
 		tmp = GetFileHash()
 		if(bak != tmp):
 			bak = tmp
 			if(Thread[0]):
 				Thread[0] = False
 				while Thread[0] == False:
-					time.sleep(1)
+					utime.sleep(1)
 			_thread.start_new_thread(__index, ())
+	_thread.exit()
 
 def __index():
-	global ReloadFile
+	global ReloadFile, Thread
 	Thread[0] = True
 	file = open(ReloadFile, "r")
 	code = file.read()
@@ -38,21 +40,17 @@ def __index():
 	except Exception as e:
 		sys.print_exception(e)
 	while Thread[0]:
-		time.sleep(1)
+		utime.sleep(1)
 		pass
 	Thread[0] = True
+	_thread.exit()
 
 def start(file_name):
-	global ReloadFile
-	global ReloadState
+	global ReloadFile, ReloadState
 	ReloadFile = file_name
 	ReloadState = True
 	ThreadFileCheck = _thread.start_new_thread(__check, ())
 
 def close():
-	Thread[0] = False
-	ReloadState = False
-
-if __name__ == "__main__":
-	thread_start()
-	
+	global ReloadState, Thread
+	ReloadState, Thread[0] = False, False

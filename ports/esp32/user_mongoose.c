@@ -5,7 +5,7 @@
 
 #include "user_mongoose.h"
 
-static const char *TAG = "user_smartconfig";
+static const char *TAG = "user_mongoose";
 
 static struct mg_serve_http_opts opts;
 
@@ -95,51 +95,62 @@ static struct mg_mgr mgr_http;
 static struct mg_mgr mgr_dns;
 static bool mongoose_state = false;
 
-void mg_init()
+bool mg_start()
+{
+    if(mongoose_state == false)
+    {
+        // webdav config
+        opts.document_root = ".";
+        opts.dav_document_root = ".";
+        opts.dav_auth_file = "-";
+
+        ESP_LOGD(TAG, "Starting web-server on port %s\n", MG_PORT_HTTP);
+        
+        mg_mgr_init(&mgr_http, NULL);
+
+        struct mg_connection *nc_http = mg_bind(&mgr_http, MG_PORT_HTTP, mg_ev_http_handler);
+
+        mg_set_protocol_http_websocket(nc_http);
+
+        if (nc_http == NULL)
+        {
+            mg_mgr_free(&mgr_http);
+            ESP_LOGD(TAG, "Error nc_http setting up listener!\n");
+            return false;
+        }
+
+        ESP_LOGD(TAG, "Starting dns-server on port %s\n", MG_PORT_DNS);
+
+        mg_mgr_init(&mgr_dns, NULL);
+
+        mg_set_nameserver(&mgr_dns, BitHostName);
+
+        struct mg_connection *nc_dns = mg_bind(&mgr_dns, MG_PORT_DNS, mg_ev_dns_handler);
+
+        mg_set_protocol_dns(nc_dns);
+
+        if (nc_dns == NULL)
+        {
+            mg_mgr_free(&mgr_dns);
+            ESP_LOGD(TAG, "Error nc_dns setting up listener!\n");
+            return false;
+        }
+        
+        mongoose_state = true;
+        return true;
+    }
+    return false;
+}
+
+void mg_close()
 {
     if(mongoose_state)
     {
+        mongoose_state = false;
+
         mg_mgr_free(&mgr_http);
         mg_mgr_free(&mgr_dns);
     }
-    // webdav
-    opts.document_root = ".";
-    opts.dav_document_root = ".";
-    opts.dav_auth_file = "-";
-
-    ESP_LOGD(TAG, "Starting web-server on port %s\n", MG_PORT_HTTP);
-    
-    mg_mgr_init(&mgr_http, NULL);
-
-    struct mg_connection *nc_http = mg_bind(&mgr_http, MG_PORT_HTTP, mg_ev_http_handler);
-
-    mg_set_protocol_http_websocket(nc_http);
-
-    if (nc_http == NULL)
-    {
-        mg_mgr_free(&mgr_http);
-        ESP_LOGD(TAG, "Error nc_http setting up listener!\n");
-        return;
-    }
-
-    ESP_LOGD(TAG, "Starting dns-server on port %s\n", MG_PORT_DNS);
-
-    mg_mgr_init(&mgr_dns, NULL);
-
-    mg_set_nameserver(&mgr_dns, BitHostName);
-
-    struct mg_connection *nc_dns = mg_bind(&mgr_dns, MG_PORT_DNS, mg_ev_dns_handler);
-
-    mg_set_protocol_dns(nc_dns);
-
-    if (nc_dns == NULL)
-    {
-        mg_mgr_free(&mgr_dns);
-        ESP_LOGD(TAG, "Error nc_dns setting up listener!\n");
-        return;
-    }
-    
-    mongoose_state = true;
 }
 
 void mg_poll()

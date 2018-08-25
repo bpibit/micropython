@@ -146,15 +146,26 @@ bool MicroPythonCheckFile()
     }
     return false;
 }
+
 extern FATFS *mongoose_vfs;
 
-STATIC mp_obj_t mongoose_init(void) {
+STATIC mp_obj_t mongoose_init() {
     const char * oofatfs_path = "/flashbdev";
     mongoose_vfs = lookup_path(&oofatfs_path);
-    mg_init();
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mongoose_init_obj, mongoose_init);
+
+STATIC mp_obj_t mongoose_start(void) {
+    return mp_obj_new_bool(mg_start());
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mongoose_start_obj, mongoose_start);
+
+STATIC mp_obj_t mongoose_close(void) {
+    mg_close();
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mongoose_close_obj, mongoose_close);
 
 STATIC mp_obj_t mongoose_poll(void) {
     mg_poll();
@@ -164,8 +175,10 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_0(mongoose_poll_obj, mongoose_poll);
 
 STATIC const mp_rom_map_elem_t mongoose_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_mongoose) },
+    { MP_ROM_QSTR(MP_QSTR___init__), MP_ROM_PTR(&mongoose_init_obj) },
 
-    { MP_ROM_QSTR(MP_QSTR_init), MP_ROM_PTR(&mongoose_init_obj) },
+    { MP_ROM_QSTR(MP_QSTR_start), MP_ROM_PTR(&mongoose_start_obj) },
+    { MP_ROM_QSTR(MP_QSTR_close), MP_ROM_PTR(&mongoose_close_obj) },
     { MP_ROM_QSTR(MP_QSTR_poll), MP_ROM_PTR(&mongoose_poll_obj) },
     
 };
