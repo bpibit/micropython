@@ -1,7 +1,7 @@
 
 #include "mongoose.h"
 
-#define LOG_LOCAL_LEVEL ESP_LOG_VERBOSE
+// #define LOG_LOCAL_LEVEL ESP_LOG_VERBOSE
 
 #include "esp_log.h"
 
@@ -96,7 +96,7 @@ static void mg_ev_dns_handler(struct mg_connection *nc, int ev, void *ev_data)
 */
 
 static struct mg_mgr mgr_http;
-static struct mg_mgr mgr_dns;
+// static struct mg_mgr mgr_dns;
 static bool mongoose_state = false;
 
 bool mg_start()
