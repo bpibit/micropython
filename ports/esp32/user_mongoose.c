@@ -1,6 +1,8 @@
 
 #include "mongoose.h"
 
+#define LOG_LOCAL_LEVEL ESP_LOG_VERBOSE
+
 #include "esp_log.h"
 
 #include "user_mongoose.h"
@@ -52,6 +54,7 @@ static void mg_ev_http_handler(struct mg_connection *nc, int ev, void *p)
     }
 }
 
+/*
 static void mg_ev_dns_handler(struct mg_connection *nc, int ev, void *ev_data)
 {
     in_addr_t s_our_ip_addr = inet_addr((const char*)"192.168.4.1");
@@ -90,6 +93,7 @@ static void mg_ev_dns_handler(struct mg_connection *nc, int ev, void *ev_data)
         break;
     }
 }
+*/
 
 static struct mg_mgr mgr_http;
 static struct mg_mgr mgr_dns;
@@ -110,8 +114,6 @@ bool mg_start()
 
         struct mg_connection *nc_http = mg_bind(&mgr_http, MG_PORT_HTTP, mg_ev_http_handler);
 
-        mg_set_protocol_http_websocket(nc_http);
-
         if (nc_http == NULL)
         {
             mg_mgr_free(&mgr_http);
@@ -119,6 +121,9 @@ bool mg_start()
             return false;
         }
 
+        mg_set_protocol_http_websocket(nc_http);
+
+/*
         ESP_LOGD(TAG, "Starting dns-server on port %s\n", MG_PORT_DNS);
 
         mg_mgr_init(&mgr_dns, NULL);
@@ -135,11 +140,11 @@ bool mg_start()
             ESP_LOGD(TAG, "Error nc_dns setting up listener!\n");
             return false;
         }
-        
+*/
+
         mongoose_state = true;
-        return true;
     }
-    return false;
+    return mongoose_state;
 }
 
 void mg_close()
@@ -148,8 +153,10 @@ void mg_close()
     {
         mongoose_state = false;
 
+        for(int i=0; i<100; i++)
+            mg_mgr_poll(&mgr_http, 10); // flash something
         mg_mgr_free(&mgr_http);
-        mg_mgr_free(&mgr_dns);
+        //mg_mgr_free(&mgr_dns);
     }
 }
 
@@ -157,7 +164,7 @@ void mg_poll()
 {
     if(mongoose_state)
     {
-        mg_mgr_poll(&mgr_dns, 10);
+        //mg_mgr_poll(&mgr_dns, 10);
         mg_mgr_poll(&mgr_http, 10);
     }
 }
