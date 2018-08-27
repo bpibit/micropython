@@ -49,12 +49,14 @@ utime.sleep(4)
 import webdav
 print('webdav start')
 print(webdav.start())
+
 import os
 print('check index.py')
 os.stat('index.py')
-import reload
-print('reload start index.py')
-reload.start('index.py')
+
+print('dynamic start index.py')
+webdav.dynamic().start('index.py')
+
 """)
 
     return vfs
